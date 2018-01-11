@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+	<title>Testing dht sensor</title>
+	<head></head>
+	<body>
+		 <script src="/socket.io/socket.io.js"></script>
+		<script>
+			var socket = io();
+			socket.on('sendingdata', function(data){
+				var temp = data.temperature;
+				var hum = data.humidity;
+				document.write('temperature: ' +  temp + ' humidity: ' + hum + '<br />');		
+			})
+		</script>
+		
+	</body>
+</html>
