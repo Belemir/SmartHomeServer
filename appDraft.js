@@ -44,8 +44,9 @@ io.on("connection", socket => {
     //     return res;
     // }, 1000);
     i++;
-    res = printSth();
-      socket.emit("FromAPI", res); // Emitting a new message. It will be consumed by the client
+    res1 = printSth();
+    res2 = printSthDifferent();
+      socket.emit("FromAPI", {res1: res1, res2: res2}); // Emitting a new message. It will be consumed by the client
     } catch (error) {
       console.error(`Error: ${error.code}`);
     }
@@ -55,6 +56,12 @@ io.on("connection", socket => {
   const printSth = () =>   {
   
       return "Hello Bro!" + i;
+    
+  };
+
+const printSthDifferent= () =>   {
+  
+      return "Hello Dude!" + i;
     
   };
   
