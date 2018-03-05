@@ -7,6 +7,23 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 const rpiDhtSensor = require('rpi-dht-sensor');
+const motionSensor = require('pi-pir-sensor');
+
+
+//Motion sensor configuration
+const pirSensor = new motionSensor({
+    // pin number must be specified 
+    pin: 12,
+ 
+    // loop time to check PIR sensor, defaults to 1.5 seconds 
+    loop: 1500
+});
+
+pirSensor.on('movement', function () {
+    console.log("Motion Detected");
+});
+ 
+pirSensor.start();
 
 let interval;
 
@@ -45,6 +62,8 @@ getHeatData = socket => {
 	}
 
 }
+
+
 
 //Listening port
 server.listen(port, () => {
