@@ -9,6 +9,7 @@ servoPin = 12
 lightSensorPin = 27
 rainPin = 17
 motionPin = 18
+gasPin = 19
 
 
 #GPIO setup
@@ -17,6 +18,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(lightSensorPin, GPIO.IN)
 GPIO.setup(rainPin, GPIO.IN)
 GPIO.setup(motionPin, GPIO.IN)
+GPIO.setup(gasPin, GPIO.IN)
 GPIO.setwarnings(False)
 
 #setting initial state of servo motor
@@ -43,6 +45,12 @@ try:
                         
                 else:
                         print "Rain NOT Detected"
+
+                #Gas Detection
+                if GPIO.input(gasPin) == 0:
+                        print "Gas Detected"
+                else:
+                        print "Gas NOT Detected"
 
                 #Motion Detection
                 if GPIO.input(motionPin) == 0:

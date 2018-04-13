@@ -18,6 +18,7 @@ let lightVal;
 let motionVal;
 let rainVal;
 let dhtVal;
+let gasVal;
 
 const lightDetected = 'Light Detected';
 const lightNotDetected ='Light NOT Detected';
@@ -25,6 +26,8 @@ const rainDetected = 'Rain Detected';
 const rainNotDetected = 'Rain NOT Detected';
 const motionDetected = 'Motion Detected';
 const motionNotDetected = 'Motion NOT Detected';
+const gasDetected = 'Gas Detected';
+const gasNotDetected = 'Gas NOT Detected';
 
 
 //Handling sensor page
@@ -47,6 +50,7 @@ emitSocketEvent = socket => {
 				lightstatus: lightVal,
 				rainstatus: rainVal,
 				motionstatus: motionVal,
+				gasstatus: gasVal
 			})
 	}catch(error){
 		console.error(`Error: ${error.code}`);	
@@ -83,14 +87,20 @@ sendSensorData = socket => {
 				case motionNotDetected:
 					motionVal = motionNotDetected;
 					break;
+				case gasDetected:
+					gasVal = gasDetected;
+					break;
+				case gasNotDetected:
+					gasVal = gasNotDetected;
 				case (message.match(/^Temperature/) || {}).input:
 					dhtVal = message;
 					break;
 				default:
-					rainVal = 'Loading Data From Sensor...';
-					motionVal = 'Loading Data From Sensor...';
-					dhtVal = 'Loading Data From Sensor...';
-					lightVal = 'Loading Data From Sensor...';
+					rainVal = 'Fetching Data...';
+					motionVal = 'Fetching Data...';
+					dhtVal = 'Fetching Data...';
+					lightVal = 'Fetching Data...';
+					gasVal = 'Fetching Data...';
 					break;
 				
 			}
