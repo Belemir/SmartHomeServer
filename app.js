@@ -7,46 +7,126 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 const PythonShell = require('python-shell');
-//const rpiDhtSensor = require('rpi-dht-sensor');
-//const motionSensor = require('pi-pir-sensor');
+const rpiDhtSensor = require('rpi-dht-sensor');
+const Sensor = require('dovlet-rpi-sensors');
 
+/*
+//Garage door configuration
+const openGarageDoor = new PythonShell('opengarage.py');
+const closeGarageDoor = new PythonShell('closegarage.py');
+*/
 
-const pyshell = new PythonShell('sensors.py');
+//Configuring Heat and Humidity sensor
+const dht = new rpiDhtSensor.DHT11(4);
+let temperature = 0;
+let humidity = 0;
 
 let interval;
 let lightVal;
 let motionVal;
 let rainVal;
-let dhtVal;
 let gasVal;
+let garageStatus;
 
-const lightDetected = 'Light Detected';
-const lightNotDetected ='Light NOT Detected';
-const rainDetected = 'Rain Detected';
-const rainNotDetected = 'Rain NOT Detected';
-const motionDetected = 'Motion Detected';
-const motionNotDetected = 'Motion NOT Detected';
-const gasDetected = 'Gas Detected';
-const gasNotDetected = 'Gas NOT Detected';
+//Motion Sensor Configuration
+const motionSensor = new Sensor({
+	pinNumber: 18,
+	loopInterval: 500
+});
 
+motionSensor.on('detection', () => {
+	console.log('Motion Detected');
+	motionVal = 'Motion Detected';
+});
+
+motionSensor.startDetection();
+
+//Light Sensor Configuration
+const lightSensor = new Sensor({
+	pinNumber: 27,
+	loopInterval: 500
+});
+
+lightSensor.on('detection', () => {
+	console.log('Light Detected');
+	lightVal = 'Light Detected';
+});
+
+lightSensor.startDetection();
+
+//Gas Sensor Configuration
+const gasSensor = new Sensor({
+	pinNumber: 19,
+	loopInterval: 500
+});
+
+gasSensor.on('detection', () => {
+	console.log('Gas Detected');
+	gasVal = 'Gas Detected';
+});
+
+gasSensor.startDetection();
+
+//Rain Sensor Configuration
+const rainSensor = new Sensor({
+	pinNumber: 17,
+	loopInterval: 500
+});
+
+rainSensor.on('detection', () => {
+	console.log('Rain Detected');
+	rainVal = 'Rain Detected';
+});
+
+rainSensor.startDetection();
+
+//Updating sensor values every 4 seconds
+setInterval(() => {
+	motionVal = 'Fetching Data ...',
+	lightVal = 'Fetching Data ...',
+	rainVal = 'Fetching Data ...',
+	gasVal = 'Fetching Data ...'
+},4000);
 
 //Handling sensor page
 
 	io.on('connection', socket => {
 		console.log('Client connected');
-
-		 sendSensorData(socket);
+		if(interval){
+			clearInterval(interval);			
+		}
+		interval = setInterval(() => sendSensorData(socket),1000);
 		
+		socket.on('garageDoorEvent', data => {
+			garageStatus = data.garageData;
+			if(garageStatus){
+				PythonShell.run('opengarage.py', err => {
+					if( err ) throw err;
+					console.log('Garage door is open');
+				});
+			} else {
+				PythonShell.run('closegarage.py', err => {
+					if( err ) throw err;
+					console.log('Garage door  is closed');
+				});
+			}		
+				
+		});
 		socket.on('disconnect', () => {
 			console.log('Client disconnected :(');		
 		});
 		});
 
+//Controlling garage door
+
+	
+
 emitSocketEvent = socket => {
 	try{
 		socket.emit('sendingsensordata', 
 			{
-				dhtstatus: dhtVal,
+				temperature: temperature,
+				humidity: humidity,
 				lightstatus: lightVal,
 				rainstatus: rainVal,
 				motionstatus: motionVal,
@@ -59,54 +139,16 @@ emitSocketEvent = socket => {
 
 sendSensorData = socket => {
 	try{
-
-			//Getting Sensor data
-			pyshell.on('message',  message => {
-
-			// received a message sent from the Python script (a simple "print" statement)
-
-			switch(message){
-				case lightDetected:
-					lightVal = lightDetected;
-					//emitSocketEvent(socket);
-					//commented this emitSocketEvent to test out the speed 
-					//of sending data through socket :)
-					break;
-				case lightNotDetected:
-					lightVal = lightNotDetected;
-					break;
-				case rainDetected:
-					rainVal = rainDetected;
-					break;
-				case rainNotDetected:
-					rainVal = rainNotDetected;
-					break;
-				case motionDetected:
-					motionVal = motionDetected;
-					break;
-				case motionNotDetected:
-					motionVal = motionNotDetected;
-					break;
-				case gasDetected:
-					gasVal = gasDetected;
-					break;
-				case gasNotDetected:
-					gasVal = gasNotDetected;
-				case (message.match(/^Temperature/) || {}).input:
-					dhtVal = message;
-					break;
-				default:
-					rainVal = 'Fetching Data...';
-					motionVal = 'Fetching Data...';
-					dhtVal = 'Fetching Data...';
-					lightVal = 'Fetching Data...';
-					gasVal = 'Fetching Data...';
-					break;
-				
-			}
+			
+			const readout = dht.read();
+ 			temperature = readout.temperature.toFixed(2);
+ 			humidity = readout.humidity.toFixed(2) ;
+  
+     			console.log('Temperature: ' + readout.temperature.toFixed(2) + 'C, ' +
+         '		humidity: ' + readout.humidity.toFixed(2) + '%');
+			
 			emitSocketEvent(socket);
-			console.log(message)
-			})
+
 		
 	} catch(error){
 		console.error(`Error: ${error.code}`);	
