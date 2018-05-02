@@ -6,15 +6,20 @@ const port = process.env.PORT || 8888;
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+const GpioPin = require('onoff').Gpio;
 const PythonShell = require('python-shell');
 const rpiDhtSensor = require('rpi-dht-sensor');
 const Sensor = require('dovlet-rpi-sensors');
+const room = "room";
 
-/*
-//Garage door configuration
-const openGarageDoor = new PythonShell('opengarage.py');
-const closeGarageDoor = new PythonShell('closegarage.py');
-*/
+
+//Configuring LEDs
+
+const kitchenLED = new GpioPin(6, 'out');
+/*const livingRoomLED = new Gpio(5, 'out');
+const garageLED = new Gpio(13, 'out');
+const gardenLED = new Gpio(26, 'out');*/
+
 
 //Configuring Heat and Humidity sensor
 const dht = new rpiDhtSensor.DHT11(4);
@@ -26,7 +31,11 @@ let lightVal;
 let motionVal;
 let rainVal;
 let gasVal;
-let garageStatus;
+let garageVal = false;
+let kitchenLightVal = false;
+let livingRoomLightVal = false;
+let garageLightVal = false;
+let gardenLightVal = false;
 
 //Motion Sensor Configuration
 const motionSensor = new Sensor({
@@ -92,14 +101,16 @@ setInterval(() => {
 
 	io.on('connection', socket => {
 		console.log('Client connected');
+		socket.join(room);
 		if(interval){
 			clearInterval(interval);			
 		}
 		interval = setInterval(() => sendSensorData(socket),1000);
 		
+		//Handling Garage Door
 		socket.on('garageDoorEvent', data => {
-			garageStatus = data.garageData;
-			if(garageStatus){
+			garageVal = data.garageData;
+			if(garageVal){
 				PythonShell.run('opengarage.py', err => {
 					if( err ) throw err;
 					console.log('Garage door is open');
@@ -109,28 +120,82 @@ setInterval(() => {
 					if( err ) throw err;
 					console.log('Garage door  is closed');
 				});
-			}		
-				
+			}
 		});
+		
+		//Handling Kitchen Light
+		socket.on('kitchenLightEvent', data => {
+			kitchenLightVal = data.kitchenLightData;
+			if (kitchenLED.readSync() === 0) { 
+			    kitchenLED.writeSync(1);
+			    kitchenLightVal = true; 
+			  } else {
+			    kitchenLED.writeSync(0);
+			    kitchenLightVal = false;
+			  }
+		});		
+
+		/*
+		//Handling Living Room Light
+		socket.on('livingRoomLightEvent', data => {
+			livingRoomLightVal = data.LivingRoomLightData;
+			if (livingRoomLED.readSync() === 0) { 
+			    livingRoomLED.writeSync(1);
+			    livingRoomLightVal = true; 
+			  } else {
+			    livingRoomLED.writeSync(0);
+			    livingRoomLightVal = false;
+			  }
+		});
+
+		//Handling Garage Light
+		socket.on('garageLightEvent', data => {
+			garageLightVal = data.garageLightData;
+			if (garageLED.readSync() === 0) { 
+			    garageLED.writeSync(1);
+			    garageLightVal = true; 
+			  } else {
+			    garageLED.writeSync(0);
+			    garageLightVal = false;
+			  }
+		});	
+
+		//Handling Garden Light
+		socket.on('gardenLightEvent', data => {
+			gardenLightVal = data.gardenLightData;
+			if (gardenLED.readSync() === 0) { 
+			    gardenLED.writeSync(1);
+			    gardenLightVal = true; 
+			  } else {
+			    gardenLED.writeSync(0);
+			    gardenLightVal = false;
+			  }
+		});					
+		*/		
+		
 		socket.on('disconnect', () => {
 			console.log('Client disconnected :(');		
 		});
 		});
 
-//Controlling garage door
-
 	
-
+//Emitting Socket data
 emitSocketEvent = socket => {
 	try{
-		socket.emit('sendingsensordata', 
+		socket.join(room);
+		io.to(room).emit('sendingsensordata',
 			{
 				temperature: temperature,
 				humidity: humidity,
-				lightstatus: lightVal,
-				rainstatus: rainVal,
-				motionstatus: motionVal,
-				gasstatus: gasVal
+				lightStatus: lightVal,
+				rainStatus: rainVal,
+				motionStatus: motionVal,
+				gasStatus: gasVal,
+				garageStatus: garageVal,
+				livingRoomLightStatus: livingRoomLightVal,
+				kitchenLightStatus: kitchenLightVal,
+				garageLightStatus: garageLightVal,
+				gardenLightStatus: gardenLightVal
 			})
 	}catch(error){
 		console.error(`Error: ${error.code}`);	

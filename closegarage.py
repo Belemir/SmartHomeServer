@@ -19,8 +19,6 @@ p.start(7.5)
 
 try:
         
-    p.ChangeDutyCycle(7.5)
-    time.sleep(1)
     p.ChangeDutyCycle(12.5)
     time.sleep(1)
                            

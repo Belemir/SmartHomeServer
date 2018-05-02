@@ -14,12 +14,12 @@ GPIO.setwarnings(False)
 
 #setting initial state of servo motor
 p = GPIO.PWM(servoPin,50)
-p.start(7.5)
+p.start(0)
 
 
 try:
         
-    p.ChangeDutyCycle(2.5)
+    p.ChangeDutyCycle(7.5)
     time.sleep(1)
                                 
 except KeyboardInterrupt:
