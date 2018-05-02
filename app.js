@@ -20,10 +20,6 @@ const kitchenLED = new GpioPin(6, 'out');
 const garageLED = new Gpio(13, 'out');
 const gardenLED = new Gpio(26, 'out');*/
 
-//TESTING KITCHEN LED WITH LIGHT SENSOR
-setTimeout(() => {	
-	kitchenLED.writeSync(1);
-}, 4000);
 
 //Configuring Heat and Humidity sensor
 const dht = new rpiDhtSensor.DHT11(4);
@@ -36,11 +32,17 @@ let motionVal;
 let rainVal;
 let gasVal;
 let garageVal = false;
-//DONT FORGET TO UPDATE KITCHEN TO GARDEN
-let kitchenLightVal = true;
+let kitchenLightVal = false;
 let livingRoomLightVal = false;
 let garageLightVal = false;
 let gardenLightVal = false;
+
+//TESTING KITCHEN LED WITH LIGHT SENSOR
+setTimeout(() => {	
+	kitchenLED.writeSync(1);
+	kitchenLightVal = true;
+}, 4000);
+
 
 //Motion Sensor Configuration
 const motionSensor = new Sensor({
@@ -66,9 +68,10 @@ lightSensor.on('detection', () => {
 	lightVal = 'Light Detected';
 	//DONT FORGET TO UPDATE KITCHEN LED TO GARDEN LED
 	kitchenLED.writeSync(0);
-	kitchenLightVal = true;
+	kitchenLightVal = false;
 	setTimeout(() => {	
 	kitchenLED.writeSync(1);
+	kitchenLightVal = true;
 	}, 5000);
 });
 
