@@ -15,10 +15,10 @@ const room = "room";
 
 //Configuring LEDs
 
-const kitchenLED = new GpioPin(6, 'out');
-/*const livingRoomLED = new Gpio(5, 'out');
-const garageLED = new Gpio(13, 'out');
-const gardenLED = new Gpio(26, 'out');*/
+const kitchenLED = new GpioPin(21, 'out');
+const livingRoomLED = new GpioPin(16, 'out');
+const garageLED = new GpioPin(6, 'out');
+const gardenLED = new GpioPin(20, 'out');
 
 
 //Configuring Heat and Humidity sensor
@@ -28,19 +28,19 @@ let humidity = 0;
 
 let interval;
 let lightVal;
-let motionVal;
-let rainVal;
-let gasVal;
+let motionVal = false;
+let rainVal = false;
+let gasVal =false;
 let garageVal = false;
 let kitchenLightVal = false;
 let livingRoomLightVal = false;
 let garageLightVal = false;
 let gardenLightVal = false;
 
-//TESTING KITCHEN LED WITH LIGHT SENSOR
+
 setTimeout(() => {	
-	kitchenLED.writeSync(1);
-	kitchenLightVal = true;
+	gardenLED.writeSync(1);
+	gardenLightVal = true;
 }, 4000);
 
 
@@ -66,12 +66,11 @@ const lightSensor = new Sensor({
 lightSensor.on('detection', () => {
 	console.log('Light Detected');
 	lightVal = 'Light Detected';
-	//DONT FORGET TO UPDATE KITCHEN LED TO GARDEN LED
-	kitchenLED.writeSync(0);
-	kitchenLightVal = false;
+	gardenLED.writeSync(0);
+	gardenLightVal = false;
 	setTimeout(() => {	
-	kitchenLED.writeSync(1);
-	kitchenLightVal = true;
+	gardenLED.writeSync(1);
+	gardenLightVal = true;
 	}, 5000);
 });
 
@@ -105,11 +104,11 @@ rainSensor.startDetection();
 
 //Updating sensor values every 4 seconds
 setInterval(() => {
-	motionVal = 'Fetching Data ...',
-	lightVal = 'Fetching Data ...',
-	rainVal = 'Fetching Data ...',
-	gasVal = 'Fetching Data ...'
-},4000);
+	motionVal = false,
+	lightVal = false,
+	rainVal = false,
+	gasVal = false
+},3000);
 
 //Handling sensor page
 
@@ -149,7 +148,7 @@ setInterval(() => {
 			  }
 		});		
 
-		/*
+		
 		//Handling Living Room Light
 		socket.on('livingRoomLightEvent', data => {
 			livingRoomLightVal = data.LivingRoomLightData;
@@ -160,7 +159,7 @@ setInterval(() => {
 			    livingRoomLED.writeSync(0);
 			    livingRoomLightVal = false;
 			  }
-		});
+		}); 
 
 		//Handling Garage Light
 		socket.on('garageLightEvent', data => {
@@ -185,7 +184,7 @@ setInterval(() => {
 			    gardenLightVal = false;
 			  }
 		});					
-		*/		
+		
 		
 		socket.on('disconnect', () => {
 			console.log('Client disconnected :(');		
@@ -220,6 +219,7 @@ sendSensorData = socket => {
 	try{
 			
 			const readout = dht.read();
+
  			temperature = readout.temperature.toFixed(2);
  			humidity = readout.humidity.toFixed(2) ;
   
@@ -239,4 +239,3 @@ sendSensorData = socket => {
 server.listen(port, () => {
 	console.log(`Listening on port ${port}`)
 });
-
